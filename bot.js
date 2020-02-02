@@ -79,23 +79,32 @@ const getAllProductLinks = () => new Promise(async (resolve, reject) => {
 });
 
 const getProductLinksFromCat = (index) => new Promise(async (resolve, reject) => {
+  let page;
   try {
     console.log(`${index+1}/${categories.length} - Fetching Products from Category: ${categories[index].categoryName}`);
     categories[index].products = [];
     let $;
     let pageNumber = 1;
     let gotProducts = true;
+    page = await pupHelper.launchPage(browser);
+    await page.goto(`${categories[index].categoryUrl}1`, {timeout:0 , waitUntil: 'load'});
 
     do {
       console.log(`Fetching Products from Page: ${pageNumber}`);
-
-      const respData = await axios.get(`${categories[index].categoryUrl}${pageNumber}`);
+      const pageUrl = `${categories[index].categoryUrl}${pageNumber}`;
+      const respData = await page.evaluate(async (url) => {
+        const resp = await fetch(url);
+        const respHtml = await resp.text();
+        return respHtml;
+      }, pageUrl);
+      // const respData = await axios.get(`${categories[index].categoryUrl}${pageNumber}`);
       // const respData = await fetch(`${categories[index].categoryUrl}${pageNumber}`);
       // const respHtml = await respData.text();
       // console.log(respHtml);
-      console.log(respData.status);
-      console.log(respData.statusText);
-      $ = cheerio.load(respData.data);
+      // console.log(respData.status);
+      // console.log(respData.statusText);
+      // console.log(respData);
+      $ = cheerio.load(respData);
 
       const productGridNode = '.product-grid_list > .product-grid_item:not(.product-grid_item--espot) a.product-card_image-link';
       if ($(productGridNode).length > 0) {
@@ -111,9 +120,11 @@ const getProductLinksFromCat = (index) => new Promise(async (resolve, reject) =>
     } while (gotProducts);
 
     console.log(`Product Links fetched for Category ${categories[index].categoryName}: ${categories[index].products.length}`);
+    
+    await page.close();
     resolve();
   } catch (error) {
-    // await page.close();
+    await page.close();
     console.log(`getAllProductLinks ${categories[index].categoryName} Error: ${error}`);
     reject(error);
   }
