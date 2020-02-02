@@ -157,6 +157,7 @@ const getProduct = (categoryIndex, productIndex) => new Promise(async (resolve, 
   let page;
   try {
     page = await pupHelper.launchPage(browser);
+    console.log(`page launched...`);
     
     console.log(`${productIndex + 1}/${categories[categoryIndex].products.length} - Fetching: ${categories[categoryIndex].products[productIndex].url}`);
     await page.goto(categories[categoryIndex].products[productIndex].url, {waitUntil: 'networkidle2', timeout: 0});
