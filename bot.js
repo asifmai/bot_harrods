@@ -7,6 +7,7 @@ const cheerio = require('cheerio');
 const fs = require('fs');
 const {zip} = require('zip-a-folder');
 const pLimit = require('p-limit');
+const fetch = require('node-fetch');
 const Helper = require('./helpers/bothelpers');
 const pupHelper = require('./helpers/puppeteerhelper');
 const keys = require('./config/keys');
@@ -88,9 +89,11 @@ const getProductLinksFromCat = (index) => new Promise(async (resolve, reject) =>
     do {
       console.log(`Fetching Products from Page: ${pageNumber}`);
 
-      const respData = await axios.get(`${categories[index].categoryUrl}${pageNumber}`);
-      console.log(respData);
-      $ = cheerio.load(respData.data);
+      // const respData = await axios.get(`${categories[index].categoryUrl}${pageNumber}`);
+      const respData = await fetch(`${categories[index].categoryUrl}${pageNumber}`);
+      const respHtml = await respData.text();
+      console.log(respHtml);
+      $ = cheerio.load(respHtml);
 
       const productGridNode = '.product-grid_list > .product-grid_item:not(.product-grid_item--espot) a.product-card_image-link';
       if ($(productGridNode).length > 0) {
