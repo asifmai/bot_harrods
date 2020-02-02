@@ -11,8 +11,8 @@ const fetch = require('node-fetch');
 const Helper = require('./helpers/bothelpers');
 const pupHelper = require('./helpers/puppeteerhelper');
 const keys = require('./config/keys');
-// const categories = require('./config/categories');
-const categories = JSON.parse(fs.readFileSync('productLinks.json', 'utf8'));
+const categories = require('./config/categories');
+// const categories = JSON.parse(fs.readFileSync('productLinks.json', 'utf8'));
 const shopifyHelper = require('./helpers/shopifyhelper');
 let browser;
 
@@ -29,8 +29,8 @@ module.exports.run = () => new Promise(async (resolve, reject) => {
     browser = await pupHelper.launchBrowser();
 
     // Fetch Categories
-    // await getAllProductLinks();
-    // fs.writeFileSync('productLinks.json', JSON.stringify(categories));
+    await getAllProductLinks();
+    fs.writeFileSync('productLinks.json', JSON.stringify(categories));
 
     // Fetch Products
     await getAllProducts();
@@ -159,7 +159,7 @@ const getProduct = (categoryIndex, productIndex) => new Promise(async (resolve, 
     
     console.log(`${productIndex + 1}/${categories[categoryIndex].products.length} - Fetching: ${categories[categoryIndex].products[productIndex].url}`);
     await page.goto(categories[categoryIndex].products[productIndex].url, {waitUntil: 'load', timeout: 0});
-    await page.screenShot({path: 'screenshot.png'})
+
     categories[categoryIndex].products[productIndex].title = await pupHelper.getTxt('h1.buying-controls_title > span[itemprop="name"]', page);
     if (categories[categoryIndex].products[productIndex].title !== '') {
       categories[categoryIndex].products[productIndex].handle = await pupHelper.getAttr('ul.pdp_images-list', 'data-product-code', page);
