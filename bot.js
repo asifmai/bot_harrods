@@ -89,11 +89,13 @@ const getProductLinksFromCat = (index) => new Promise(async (resolve, reject) =>
     do {
       console.log(`Fetching Products from Page: ${pageNumber}`);
 
-      // const respData = await axios.get(`${categories[index].categoryUrl}${pageNumber}`);
-      const respData = await fetch(`${categories[index].categoryUrl}${pageNumber}`);
-      const respHtml = await respData.text();
-      console.log(respHtml);
-      $ = cheerio.load(respHtml);
+      const respData = await axios.get(`${categories[index].categoryUrl}${pageNumber}`);
+      // const respData = await fetch(`${categories[index].categoryUrl}${pageNumber}`);
+      // const respHtml = await respData.text();
+      // console.log(respHtml);
+      console.log(respData.status);
+      console.log(respData.statusText);
+      $ = cheerio.load(respData.data);
 
       const productGridNode = '.product-grid_list > .product-grid_item:not(.product-grid_item--espot) a.product-card_image-link';
       if ($(productGridNode).length > 0) {
