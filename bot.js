@@ -11,8 +11,8 @@ const fetch = require('node-fetch');
 const Helper = require('./helpers/bothelpers');
 const pupHelper = require('./helpers/puppeteerhelper');
 const keys = require('./config/keys');
-const categories = require('./config/categories');
-// const categories = JSON.parse(fs.readFileSync('productLinks.json', 'utf8'));
+// const categories = require('./config/categories');
+const categories = JSON.parse(fs.readFileSync('productLinks.json', 'utf8'));
 const shopifyHelper = require('./helpers/shopifyhelper');
 let browser;
 
@@ -26,11 +26,11 @@ module.exports.run = () => new Promise(async (resolve, reject) => {
     fs.mkdirSync('csvs');
 
     // Launch Browser
-    browser = await pupHelper.launchBrowser();
+    browser = await pupHelper.launchBrowser(true);
 
     // Fetch Categories
-    await getAllProductLinks();
-    fs.writeFileSync('productLinks.json', JSON.stringify(categories));
+    // await getAllProductLinks();
+    // fs.writeFileSync('productLinks.json', JSON.stringify(categories));
 
     // Fetch Products
     await getAllProducts();
@@ -89,6 +89,7 @@ const getProductLinksFromCat = (index) => new Promise(async (resolve, reject) =>
     do {
       console.log(`Fetching Products from Page: ${pageNumber}`);
       const respData = await axios.get(`${categories[index].categoryUrl}${pageNumber}`);
+      
       $ = cheerio.load(respData.data);
 
       const productGridNode = '.product-grid_list > .product-grid_item:not(.product-grid_item--espot) a.product-card_image-link';
