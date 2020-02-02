@@ -135,7 +135,7 @@ const getProductsFromCategory = (index) => new Promise(async (resolve, reject) =
     // const csvHeader = 'Handle,Title,Body,Vendor,Type,Tags,published,Option1 Name,Option1 Value,Option2 Name, Option2 value, Option3 Name, Option3 value, Variant SKU, Grams, Variant Inventory Tracker, Variant Inventory Qty, Variant Inventory Policy, Variant Fulfillment Service, Variant Price, Variant Compare At Price, Variant Requires Shipping, Variant Taxable, Variant Barcode, Image Src, Image Src, Image Src, Image Src, Image Alt Text, Gift Card, SEO Title, SEO Description, Google Shopping / Google Product Category, Google Shopping / Gender, Google Shopping / MPN, Google Shopping / Age Group, Google Shopping / AdWords Grouping, Google Shopping / Adwords Labels, Google Shopping / Condition, Google Shopping / Custom Product, Google Shopping / Custom Label 0, Google Shopping / Custom Label 1, Google Shopping / Custom Label 2, Google Shopping / Custom Label 3, Google Shopping / Custom Label 4, Variant Image, Variant Weight Unit, Variant Tax Code\r\n';
     // Helper.saveDataToFile(fileName, csvHeader);
 
-    const limit = pLimit(10);
+    const limit = pLimit(1);
     const promises = [];
 
     for (let i = 0; i < categories[index].products.length; i++) {
@@ -159,7 +159,7 @@ const getProduct = (categoryIndex, productIndex) => new Promise(async (resolve, 
     
     console.log(`${productIndex + 1}/${categories[categoryIndex].products.length} - Fetching: ${categories[categoryIndex].products[productIndex].url}`);
     await page.goto(categories[categoryIndex].products[productIndex].url, {waitUntil: 'load', timeout: 0});
-
+    await page.screenShot({path: 'screenshot.png'})
     categories[categoryIndex].products[productIndex].title = await pupHelper.getTxt('h1.buying-controls_title > span[itemprop="name"]', page);
     if (categories[categoryIndex].products[productIndex].title !== '') {
       categories[categoryIndex].products[productIndex].handle = await pupHelper.getAttr('ul.pdp_images-list', 'data-product-code', page);
