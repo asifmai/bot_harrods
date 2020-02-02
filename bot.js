@@ -89,6 +89,7 @@ const getProductLinksFromCat = (index) => new Promise(async (resolve, reject) =>
       console.log(`Fetching Products from Page: ${pageNumber}`);
 
       const respData = await axios.get(`${categories[index].categoryUrl}${pageNumber}`);
+      console.log(respData);
       $ = cheerio.load(respData.data);
 
       const productGridNode = '.product-grid_list > .product-grid_item:not(.product-grid_item--espot) a.product-card_image-link';
