@@ -1,0 +1,12 @@
+node_modules
+new_static
+new_dynamic
+botSettings.json
+package-lock.json
+.idea
+productLinks.json
+topman.csv
+csvs
+json
+csvs.zip
+productDetails.json
