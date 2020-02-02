@@ -1,17 +1,12 @@
 const puppeteer = require('puppeteer')
 
-module.exports.launchBrowser = (debug = false) => {
+module.exports.launchBrowser = (headless = true) => {
   return new Promise(async (resolve, reject) => {
     try {
       const browser = await puppeteer.launch({
-        // headless: true,
-        // executablePath: 'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',   // Use Windows Browser
-        // slowMo: 10,              // Slow down the browser
-        // timeout: 0,              // Disable timeout
-        // defaultViewport: null,
-        // userDataDir: './temp',
+        headless: headless,
+        defaultViewport: null,
         ignoreHTTPSErrors: true,
-        devtools: debug,
         args: [
           '--disable-setuid-sandbox',
           '--no-sandbox',
@@ -22,13 +17,6 @@ module.exports.launchBrowser = (debug = false) => {
           '--disable-background-timer-throttling',
           '--disable-backgrounding-occluded-windows',
           '--disable-renderer-backgrounding',
-          // '--disable-accelerated-2d-canvas',
-          // '--disable-dev-shm-usage',
-          // '--disable-gpu',
-          // '--window-size=1366x768',
-          // '--proxy-server=143.255.52.90:8080'
-          // '--user-data-dir',                            // use local data directory called tmp
-          // '--user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3312.0 Safari/537.36"',
         ],
       });
       resolve(browser);
