@@ -26,7 +26,7 @@ module.exports.run = () => new Promise(async (resolve, reject) => {
     fs.mkdirSync('csvs');
 
     // Launch Browser
-    browser = await Helper.launchBrowser(false);
+    browser = await Helper.launchBrowser(true);
 
     // Fetch Categories
     // await getAllProductLinks();
