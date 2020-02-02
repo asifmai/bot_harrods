@@ -160,7 +160,7 @@ const getProduct = (categoryIndex, productIndex) => new Promise(async (resolve, 
     console.log(`page launched...`);
     
     console.log(`${productIndex + 1}/${categories[categoryIndex].products.length} - Fetching: ${categories[categoryIndex].products[productIndex].url}`);
-    await page.goto(categories[categoryIndex].products[productIndex].url, {waitUntil: 'networkidle2', timeout: 0});
+    await page.goto(categories[categoryIndex].products[productIndex].url, {waitUntil: 'networkidle2'});
     await page.screenshot({path: 'buddy-screenshot.png'});
 
     categories[categoryIndex].products[productIndex].title = await pupHelper.getTxt('h1.buying-controls_title > span[itemprop="name"]', page);
