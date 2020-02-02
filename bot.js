@@ -26,7 +26,7 @@ module.exports.run = () => new Promise(async (resolve, reject) => {
     fs.mkdirSync('csvs');
 
     // Launch Browser
-    browser = await pupHelper.launchBrowser();
+    browser = await Helper.launchBrowser(false);
 
     // Fetch Categories
     // await getAllProductLinks();
@@ -156,11 +156,12 @@ const getProductsFromCategory = (index) => new Promise(async (resolve, reject) =
 const getProduct = (categoryIndex, productIndex) => new Promise(async (resolve, reject) => {
   let page;
   try {
-    page = await pupHelper.launchPage(browser);
+    page = await Helper.launchPage(browser, true);
     console.log(`page launched...`);
     
     console.log(`${productIndex + 1}/${categories[categoryIndex].products.length} - Fetching: ${categories[categoryIndex].products[productIndex].url}`);
-    await page.goto(categories[categoryIndex].products[productIndex].url, {waitUntil: 'networkidle2'});
+    const resp = await page.goto(categories[categoryIndex].products[productIndex].url, {waitUntil: 'networkidle2'});
+    console.log(resp.status());
     await page.screenshot({path: 'buddy-screenshot.png'});
 
     categories[categoryIndex].products[productIndex].title = await pupHelper.getTxt('h1.buying-controls_title > span[itemprop="name"]', page);
