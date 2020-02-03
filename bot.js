@@ -26,30 +26,17 @@ module.exports.run = () => new Promise(async (resolve, reject) => {
     fs.mkdirSync('csvs');
 
     // Launch Browser
-    browser = await Helper.launchBrowser(true);
+    browser = await pupHelper.launchBrowser();
 
     // Fetch Categories
-    // await getAllProductLinks();
-    // fs.writeFileSync('productLinks.json', JSON.stringify(categories));
+    await getAllProductLinks();
+    fs.writeFileSync('productLinks.json', JSON.stringify(categories));
 
     // Fetch Products
     await getAllProducts();
 
-    // Loop Through All categories
-    // for (let i = 0; i < categories.length; i++) {
-    //   console.log(`${i + 1}/${categories.length} - Fetching Product Links for category: ${categories[i].categoryName}`);
-
-    //   // Get All Product Links For a Category
-    //   categories[i].productLinks = await getAllProductLinks(categories[i]);
-
-    //   // Remove Duplicate Links from Product Links
-    //   categories[i].productLinks = Helper.removeDuplicateLinks(categories[i].productLinks);
-
-    //   console.info(`Number of Products in category "${categories[i].categoryName}": ${categories[i].productLinks.length}`);
-
-    //   // Crawl All Product Links
-    //   categories[i].products = await crawlProductLinks(categories[i]);
-    // }
+    // Create Csvs
+    await createCsvs();
 
     // Create a zip file of all csvs
     await zip('csvs', 'csvs.zip');
@@ -67,6 +54,7 @@ module.exports.run = () => new Promise(async (resolve, reject) => {
 
 const getAllProductLinks = () => new Promise(async (resolve, reject) => {
   try {
+
     for (let i = 0; i < categories.length; i++) {
       await getProductLinksFromCat(i);
     }
@@ -116,7 +104,8 @@ const getProductLinksFromCat = (index) => new Promise(async (resolve, reject) =>
 
 const getAllProducts = () => new Promise(async (resolve, reject) => {
   try {
-    for (let i = 0; i < categories.length; i++) {
+    // for (let i = 0; i < categories.length; i++) {
+    for (let i = 0; i < 1; i++) {
       await getProductsFromCategory(i);
       fs.writeFileSync('productDetails.json', JSON.stringify(categories));
     }
@@ -131,22 +120,19 @@ const getAllProducts = () => new Promise(async (resolve, reject) => {
 const getProductsFromCategory = (index) => new Promise(async (resolve, reject) => {
   try {
     console.log(`Fetching Products from Category: ${categories[index].categoryName}`);
-    // Create CSV File Header
-    // const fileName = `csvs/${moment().format('MM-DD-YYYY')}_${keys.botName}_${categories[index].categoryName}.csv`.replace(/ /g, '').toLowerCase();
-    // const csvHeader = 'Handle,Title,Body,Vendor,Type,Tags,published,Option1 Name,Option1 Value,Option2 Name, Option2 value, Option3 Name, Option3 value, Variant SKU, Grams, Variant Inventory Tracker, Variant Inventory Qty, Variant Inventory Policy, Variant Fulfillment Service, Variant Price, Variant Compare At Price, Variant Requires Shipping, Variant Taxable, Variant Barcode, Image Src, Image Src, Image Src, Image Src, Image Alt Text, Gift Card, SEO Title, SEO Description, Google Shopping / Google Product Category, Google Shopping / Gender, Google Shopping / MPN, Google Shopping / Age Group, Google Shopping / AdWords Grouping, Google Shopping / Adwords Labels, Google Shopping / Condition, Google Shopping / Custom Product, Google Shopping / Custom Label 0, Google Shopping / Custom Label 1, Google Shopping / Custom Label 2, Google Shopping / Custom Label 3, Google Shopping / Custom Label 4, Variant Image, Variant Weight Unit, Variant Tax Code\r\n';
-    // Helper.saveDataToFile(fileName, csvHeader);
 
     const limit = pLimit(1);
     const promises = [];
 
-    for (let i = 0; i < categories[index].products.length; i++) {
+    // for (let i = 0; i < categories[index].products.length; i++) {
+    for (let i = 0; i < 20; i++) {
       promises.push((limit(() => getProduct(index, i))));
       // await getProduct(index, i);
     }
 
     await Promise.all(promises);
 
-    resolve(products);
+    resolve();
   } catch (error) {
     console.log(`getProductsFromCategory Error: ${error}`);
     reject(error);
@@ -156,13 +142,9 @@ const getProductsFromCategory = (index) => new Promise(async (resolve, reject) =
 const getProduct = (categoryIndex, productIndex) => new Promise(async (resolve, reject) => {
   let page;
   try {
-    page = await Helper.launchPage(browser, true);
-    console.log(`page launched...`);
-    
     console.log(`${productIndex + 1}/${categories[categoryIndex].products.length} - Fetching: ${categories[categoryIndex].products[productIndex].url}`);
-    const resp = await page.goto(categories[categoryIndex].products[productIndex].url, {waitUntil: 'networkidle2'});
-    console.log(resp.status());
-    await page.screenshot({path: 'buddy-screenshot.png'});
+    page = await pupHelper.launchPage(browser, true);
+    await page.goto(categories[categoryIndex].products[productIndex].url, {waitUntil: 'networkidle2', timeout: 0});
 
     categories[categoryIndex].products[productIndex].title = await pupHelper.getTxt('h1.buying-controls_title > span[itemprop="name"]', page);
     if (categories[categoryIndex].products[productIndex].title !== '') {
@@ -176,6 +158,7 @@ const getProduct = (categoryIndex, productIndex) => new Promise(async (resolve, 
       categories[categoryIndex].products[productIndex].price = Helper.clearPrice(await pupHelper.getTxt('.buying-controls_price > .price > .price_amount', page))
       categories[categoryIndex].products[productIndex].option1name = 'Sizes';
       categories[categoryIndex].products[productIndex].option2name = 'Colours';
+      await page.waitForSelector('.hrd_gallery-thumbs-list > li.hrd_gallery-thumbs-item > a.hrd_gallery-thumbs-link > img.hrd_gallery-thumbs-image');
       categories[categoryIndex].products[productIndex].images = await pupHelper.getAttrMultiple('.hrd_gallery-thumbs-list > li.hrd_gallery-thumbs-item > a.hrd_gallery-thumbs-link > img.hrd_gallery-thumbs-image', 'src', page);
       categories[categoryIndex].products[productIndex].images = categories[categoryIndex].products[productIndex].images.map((img) => 'https:' + img.replace(/\?.*$/gi, ''));
       categories[categoryIndex].products[productIndex].seotitle = await page.title();
@@ -189,31 +172,10 @@ const getProduct = (categoryIndex, productIndex) => new Promise(async (resolve, 
         const size = await pupHelper.getTxt('.buying-controls_option--size > span.buying-controls_value', page);
         if (size !== '') categories[categoryIndex].products[productIndex].sizes.push(size);
       };
-      // const variants = await fetchSizes();
-      // if (variants.length > 0) {
-        // for (let a = 0; a < variants.length; a++) {
-          // const singleVariant = {
-            // option1value: variants[a],
-            // option2value: newProduct.color,
-          // };
-          // newProduct.variants.push(singleVariant);
-          // let csvText;
-          // if (a == 0) {
-        //     csvText = `"${newProduct.handle}","${newProduct.title}","${newProduct.body.replace(/"/g, "'")}","${newProduct.vendor}","${newProduct.type}","${newProduct.tags}","TRUE","${newProduct.option1name}","${singleVariant.option1value}","${newProduct.option2name}","${singleVariant.option2value}","","","","150","shopify","5","deny","manual","${newProduct.price}","","TRUE","FALSE","${newProduct.gtin}","${newProduct.images[0] ? newProduct.images[0] : ''}","${newProduct.images[1] ? newProduct.images[1] : ''}","${newProduct.images[2] ? newProduct.images[2] : ''}","${newProduct.images[3] ? newProduct.images[3] : ''}","","FALSE","${newProduct.seotitle}","${newProduct.body.replace(/"/g, "'")}","${newProduct.googleproductcategory}","","","","","","","","","","","","","","kg",""\r\n`;
-        //   } else {
-        //     csvText = `"${newProduct.handle}","${newProduct.title}","","","","","","${newProduct.option1name}","${singleVariant.option1value}","${newProduct.option2name}","${singleVariant.option2value}","","","","150","shopify","5","deny","manual","${newProduct.price}","","TRUE","FALSE","${newProduct.gtin}","","","","","","FALSE","","","","","","","","","","","","","","","","","kg",""\r\n`;
-        //   }
-        //   Helper.saveDataToFile(fileName, csvText);
-        // };
-      // } else {
-      //   const colorVal = newProduct.color;
-      //   csvText = `"${newProduct.handle}","${newProduct.title}","${newProduct.body.replace(/"/g, "'")}","${newProduct.vendor}","${newProduct.type}","${newProduct.tags}","TRUE","${newProduct.option1name}","N/A","${newProduct.option2name}","${colorVal}","","","","150","shopify","5","deny","manual","${newProduct.price}","","TRUE","FALSE","${newProduct.gtin}","${newProduct.images[0] ? newProduct.images[0] : ''}","${newProduct.images[1] ? newProduct.images[1] : ''}","${newProduct.images[2] ? newProduct.images[2] : ''}","${newProduct.images[3] ? newProduct.images[3] : ''}","","FALSE","${newProduct.seotitle}","${newProduct.body.replace(/"/g, "'")}","${newProduct.googleproductcategory}","","","","","","","","","","","","","","kg",""\r\n`;
-      //   Helper.saveDataToFile(fileName, csvText);
-      // }
     } else {
       console.log(`Skipping product.. Title not found..`);
     }
-    
+
     await page.close();
     resolve();
   } catch (error) {
@@ -222,6 +184,58 @@ const getProduct = (categoryIndex, productIndex) => new Promise(async (resolve, 
     reject(error);
   }
 })
+
+const createCsvs = () => new Promise(async (resolve, reject) => {
+  try {
+    // for (let i = 0; i < categories.length; i++) {
+    for (let i = 0; i < 1; i++) {
+      await createCsvsForCategory(i);
+    }
+
+    resolve();
+  } catch (error) {
+    console.log(`createCsvs Error: ${error}`);
+    reject(error);
+  }
+});
+
+const createCsvsForCategory = (categoryIndex) => new Promise(async (resolve, reject) => {
+  try {
+    // Create CSV File Header
+    const fileName = `csvs/${moment().format('MM-DD-YYYY')}_${keys.botName}_${categories[categoryIndex].categoryName}.csv`.replace(/ /g, '').toLowerCase();
+    const csvHeader = 'Handle,Title,Body,Vendor,Type,Tags,published,Option1 Name,Option1 Value,Option2 Name, Option2 value, Option3 Name, Option3 value, Variant SKU, Grams, Variant Inventory Tracker, Variant Inventory Qty, Variant Inventory Policy, Variant Fulfillment Service, Variant Price, Variant Compare At Price, Variant Requires Shipping, Variant Taxable, Variant Barcode, Image Src, Image Src, Image Src, Image Src, Image Alt Text, Gift Card, SEO Title, SEO Description, Google Shopping / Google Product Category, Google Shopping / Gender, Google Shopping / MPN, Google Shopping / Age Group, Google Shopping / AdWords Grouping, Google Shopping / Adwords Labels, Google Shopping / Condition, Google Shopping / Custom Product, Google Shopping / Custom Label 0, Google Shopping / Custom Label 1, Google Shopping / Custom Label 2, Google Shopping / Custom Label 3, Google Shopping / Custom Label 4, Variant Image, Variant Weight Unit, Variant Tax Code\r\n';
+    Helper.saveDataToFile(fileName, csvHeader);
+
+    // for (let i = 0; i < categories[categoryIndex].products.length; i++) {
+    for (let i = 0; i < 20; i++) {
+      const product = categories[categoryIndex].products[i];
+      if (product.sizes.length > 0) {
+        for (let a = 0; a < product.sizes.length; a++) {
+          const singleVariant = {
+            option1value: product.sizes[a],
+            option2value: product.color,
+          };
+          let csvText;
+          if (a == 0) {
+            csvText = `"${product.handle}","${product.title}","${product.body.replace(/"/g, "'")}","${product.vendor}","${product.type}","${product.tags}","TRUE","${product.option1name}","${singleVariant.option1value}","${product.option2name}","${singleVariant.option2value}","","","","150","shopify","5","deny","manual","${product.price}","","TRUE","FALSE","${product.gtin}","${product.images[0] ? product.images[0] : ''}","${product.images[1] ? product.images[1] : ''}","${product.images[2] ? product.images[2] : ''}","${product.images[3] ? product.images[3] : ''}","","FALSE","${product.seotitle}","${product.body.replace(/"/g, "'")}","${product.googleproductcategory}","","","","","","","","","","","","","","kg",""\r\n`;
+          } else {
+            csvText = `"${product.handle}","${product.title}","","","","","","${product.option1name}","${singleVariant.option1value}","${product.option2name}","${singleVariant.option2value}","","","","150","shopify","5","deny","manual","${product.price}","","TRUE","FALSE","${product.gtin}","","","","","","FALSE","","","","","","","","","","","","","","","","","kg",""\r\n`;
+          }
+          Helper.saveDataToFile(fileName, csvText);
+        };
+      } else {
+        csvText = `"${product.handle}","${product.title}","${product.body.replace(/"/g, "'")}","${product.vendor}","${product.type}","${product.tags}","TRUE","${product.option1name}","N/A","${product.option2name}","${product.color}","","","","150","shopify","5","deny","manual","${product.price}","","TRUE","FALSE","${product.gtin}","${product.images[0] ? product.images[0] : ''}","${product.images[1] ? product.images[1] : ''}","${product.images[2] ? product.images[2] : ''}","${product.images[3] ? product.images[3] : ''}","","FALSE","${product.seotitle}","${product.body.replace(/"/g, "'")}","${product.googleproductcategory}","","","","","","","","","","","","","","kg",""\r\n`;
+        Helper.saveDataToFile(fileName, csvText);
+      }
+    };
+
+    resolve();
+  } catch (error) {
+    console.log(`createCsvsForCategory ${categories[categoryIndex].categoryName} Error: ${error}`);
+    reject(error);
+  }
+});
+
 
 const fetchGtin = () => new Promise(async (resolve, reject) => {
   try {
